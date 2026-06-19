@@ -1,0 +1,115 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+apply plugin: 'scala'
+apply plugin: 'application'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'org.scoverage'
+apply plugin: 'org.apache.pekko.grpc.gradle'
+
+ext.dockerImageName = 'scheduler'
+apply from: '../../gradle/docker.gradle'
+distDocker.dependsOn ':common:scala:distDocker', 'distTar'
+
+project.archivesBaseName = "openwhisk-scheduler"
+
+scoverage {
+    scoverageVersion.set("${gradle.scala.scoverageVersion}")
+    scoverageScalaVersion.set("${gradle.scala.scoverageScalaVersion}")
+}
+
+ext.coverageDirs = [
+        "${buildDir}/classes/scala/scoverage",
+        "${project(':common:scala').buildDir.absolutePath}/classes/scala/scoverage"
+]
+
+buildscript {
+    repositories {
+        mavenLocal()
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        maven { url 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public/' }
+        mavenCentral()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        // Pekko gRPC plugin is deployed in Maven Central
+        // See: https://pekko.apache.org/docs/pekko-grpc/current/release-notes/
+        classpath "org.apache.pekko:pekko-grpc-gradle-plugin:${gradle.pekko_grpc.version}"
+    }
+}
+
+protobuf {
+    protoc {
+        if (osdetector.os == "osx") {
+            artifact = 'com.google.protobuf:protoc:3.25.5:osx-x86_64'
+        } else {
+            artifact = 'com.google.protobuf:protoc:3.25.5'
+        }
+    }
+}
+
+// Define a separate configuration for managing the dependency on Jetty ALPN agent.
+configurations {
+    alpnagent
+}
+
+dependencies {
+    configurations.all {
+        resolutionStrategy.force "com.lihaoyi:fastparse_${gradle.scala.depVersion}:2.3.0"
+        resolutionStrategy.force "org.apache.pekko:pekko-http-core_${gradle.scala.depVersion}:${gradle.pekko_http.version}"
+        resolutionStrategy.force "org.apache.pekko:pekko-http_${gradle.scala.depVersion}:${gradle.pekko_http.version}"
+        resolutionStrategy.force "org.apache.pekko:pekko-http2-support_${gradle.scala.depVersion}:${gradle.pekko_http.version}"
+        resolutionStrategy.force "org.apache.pekko:pekko-http-spray-json_${gradle.scala.depVersion}:${gradle.pekko_http.version}"
+        resolutionStrategy.force "org.apache.pekko:pekko-parsing_${gradle.scala.depVersion}:${gradle.pekko_http.version}"
+        resolutionStrategy.force "org.apache.pekko:pekko-http_${gradle.scala.depVersion}:${gradle.pekko_http.version}"
+    }
+    implementation "org.scala-lang:scala-library:${gradle.scala.version}"
+    implementation project(':common:scala')
+    implementation "io.altoo:pekko-kryo-serialization_${gradle.scala.depVersion}:1.3.0"
+    implementation "org.apache.pekko:pekko-management-cluster-bootstrap_${gradle.scala.depVersion}:${gradle.pekko_management.version}"
+    implementation "org.apache.pekko:pekko-discovery-kubernetes-api_${gradle.scala.depVersion}:${gradle.pekko_management.version}"
+}
+
+printProtocLogs.doFirst {
+    mkdir "$buildDir"
+    file("$buildDir/pekko-grpc-gradle-plugin.log").text = "x"
+    mkdir "$project.rootDir/build"
+    file("$project.rootDir/build/pekko-grpc-gradle-plugin.log").text = "x"
+}
+printProtocLogs.configure {
+    mkdir "$buildDir"
+    file("$buildDir/pekko-grpc-gradle-plugin.log").text = "x"
+    mkdir "$project.rootDir/build"
+    file("$project.rootDir/build/pekko-grpc-gradle-plugin.log").text = "x"
+}
+
+mainClassName = "org.apache.openwhisk.core.scheduler.Scheduler"
+applicationDefaultJvmArgs = ["-Djava.security.egd=file:/dev/./urandom"]
+
+// Explictly declare task dependencies
+tasks.named("processResources") {
+    dependsOn tasks.named("extractProto")
+}
+
+tasks.named("processScoverageResources") {
+    dependsOn tasks.named("extractScoverageProto")
+}
+

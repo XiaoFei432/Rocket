@@ -1,0 +1,44 @@
+{
+  "actions": {
+    "vgg19": {
+      "library": "torch",
+      "base_model": "vgg",
+      "front_model": "/models/vgg19.front.pkl",
+      "back_model": "/models/vgg19.back.pkl",
+      "cold_start_ms": 2566,
+      "library_import_ms": 843,
+      "front_load_ms": 520,
+      "back_load_ms": 658,
+      "library_memory_mb": 420,
+      "front_memory_mb": 260,
+      "back_memory_mb": 540
+    },
+    "resnet50": {
+      "library": "torch",
+      "base_model": "resnet",
+      "front_model": "/models/resnet50.front.pkl",
+      "back_model": "/models/resnet50.back.pkl",
+      "cold_start_ms": 1900,
+      "library_import_ms": 720,
+      "front_load_ms": 410,
+      "back_load_ms": 470,
+      "library_memory_mb": 420,
+      "front_memory_mb": 180,
+      "back_memory_mb": 420
+    },
+    "bertbase": {
+      "library": "transformers",
+      "base_model": "bert-base",
+      "front_model": "/models/bertbase.front.pkl",
+      "back_model": "/models/bertbase.back.pkl",
+      "cold_start_ms": 3100,
+      "library_import_ms": 980,
+      "front_load_ms": 690,
+      "back_load_ms": 760,
+      "library_memory_mb": 520,
+      "front_memory_mb": 380,
+      "back_memory_mb": 720
+    }
+  }
+}
+

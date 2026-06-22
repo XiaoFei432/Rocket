@@ -12,7 +12,7 @@ This repository contains the source code for the paper:
 ## Overview
 
 <p align="center">
-  <img src="./figs/system.png" width="90%" alt="">
+  <img src="./figs/system.png" width="70%" alt="">
 </p>
 
 Rocket is an OpenWhisk-based serverless ML inference system that reduces startup latency and memory waste through hierarchical ML artifact pre-loading and sharing. This repository is a complete Apache OpenWhisk source tree with Rocket integrated into the scheduler, invoker, container protocol, and experiment scripts.
@@ -44,23 +44,8 @@ Rocket is an OpenWhisk-based serverless ML inference system that reduces startup
 - JDK 11 or JDK 17
 - Docker 20+
 - Gradle wrapper included in this repository
-- Python 3.8+ for Rocket helper scripts
+- Python 3.8+ 
 - OpenWhisk deployment dependencies: CouchDB, Kafka, ZooKeeper or etcd, depending on the selected OpenWhisk mode
-
-### Python Packages for Experiments
-
-Use a domestic mirror when installing packages:
-
-```bash
-python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple \
-  numpy pandas requests pyyaml tqdm
-```
-
-For model workloads, install the ML stack you actually evaluate:
-
-```bash
-python -m pip install -i https://pypi.tuna.tsinghua.edu.cn/simple torch torchvision transformers
-```
 
 ### Gradle / Maven Domestic Mirror
 
@@ -125,11 +110,6 @@ whisk {
   }
 }
 ```
-
-The default configuration is already present in:
-
-- `core/scheduler/src/main/resources/application.conf`
-- `core/invoker/src/main/resources/application.conf`
 
 ---
 
@@ -217,19 +197,6 @@ def load_back(meta):
     return torch.load(meta["path"], map_location="cpu")
 
 manager = RocketContainerManager(front_loader=load_front, back_loader=load_back)
-```
----
-
-## Experiments
-
-Replay a CSV trace with columns `timestamp_ms,action,payload`:
-
-```bash
-python rocket/tools/replay_trace.py \
-  --trace traces/azure_sample.csv \
-  --wsk wsk \
-  --speedup 10 \
-  --blocking
 ```
 ---
 
